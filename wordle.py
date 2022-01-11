@@ -93,7 +93,7 @@ def hint(actual, guess):
     return tuple(out)
 
 GuessWithExpectation = collections.namedtuple('GuessWithExpectation', ['guess', 'expected_after'])
-def best_guess(possibilities: Set[str], debug=False, stack=[]) -> GuessWithExpectation:
+def best_guess(possibilities: List[str], debug=False, stack=[]) -> GuessWithExpectation:
     values = []
     for guess in possibilities:
         values.append(
@@ -107,7 +107,7 @@ def best_guess(possibilities: Set[str], debug=False, stack=[]) -> GuessWithExpec
     print(stack, 'best guess:', best.guess, float(best.expected_after))
     return min(values, key=lambda g: g.expected_after)
 
-def expected_guesses_after(possibilities: Set[str], guess, stack=[]) -> Fraction:
+def expected_guesses_after(possibilities: List[str], guess, stack=[]) -> Fraction:
     remaining_guesses_distribution = collections.Counter()
     for hint_, sub_possibilities in possibilities_by_hint(possibilities, guess).items():
         sub_stack = stack + [brief_hint(hint_), len(sub_possibilities)]
@@ -127,9 +127,9 @@ def expected_guesses_after(possibilities: Set[str], guess, stack=[]) -> Fraction
     )
 
 def possibilities_by_hint(possibilities, guess):
-    possibilities_by_hint = collections.defaultdict(set)
+    possibilities_by_hint = collections.defaultdict(list)
     for actual in possibilities:
-        possibilities_by_hint[hint(actual, guess)].add(actual)
+        possibilities_by_hint[hint(actual, guess)].append(actual)
     return possibilities_by_hint
 
 def parse_hint_piece(hint_piece: str) -> HintPiece:
@@ -156,7 +156,7 @@ if __name__ == '__main__':
     assert failures == 0
 
     args = parser.parse_args()
-    WORDS = set(args.dictionary.read_text().splitlines())
+    WORDS = list(args.dictionary.read_text().splitlines())
     print(len(WORDS), 'words loaded from', args.dictionary)
 
     possibilities = WORDS
