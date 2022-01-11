@@ -5,6 +5,7 @@ import collections
 from enum import Enum
 from fractions import Fraction
 import pathlib
+import time
 from typing import List, Tuple, Dict, Set, Optional
 
 parser = argparse.ArgumentParser(description='Wordle solver')
@@ -92,33 +93,40 @@ def hint(actual, guess):
 
     return tuple(out)
 
+def null_log(*args):
+    pass
+
 GuessWithExpectation = collections.namedtuple('GuessWithExpectation', ['guess', 'expected_after'])
-def best_guess(possibilities: List[str], debug=False, stack=[]) -> GuessWithExpectation:
+def best_guess(possibilities: List[str], log_func=null_log, stack=[]) -> GuessWithExpectation:
     values = []
     for i, guess in enumerate(possibilities):
         values.append(
             GuessWithExpectation(guess,
-            expected_guesses_after(possibilities, guess, stack=stack + [len(possibilities), i+1, guess])),
+            expected_guesses_after(
+                possibilities,
+                guess,
+                log_func=log_func,
+                stack=stack + [len(possibilities), i+1, guess])),
         )
     best = min(
         values,
         key=lambda g: g.expected_after,
     )
-    print(stack, 'best guess:', best.guess, float(best.expected_after))
+    log_func(stack, 'best guess:', best.guess, float(best.expected_after))
     return min(values, key=lambda g: g.expected_after)
 
-def expected_guesses_after(possibilities: List[str], guess, stack=[]) -> Fraction:
+def expected_guesses_after(possibilities: List[str], guess, log_func=null_log, stack=[]) -> Fraction:
     remaining_guesses_distribution = collections.Counter()
     for hint_, sub_possibilities in possibilities_by_hint(possibilities, guess).items():
         sub_stack = stack + [brief_hint(hint_)]
-        print(sub_stack)
+        log_func(sub_stack)
         assert len(sub_possibilities) > 0
 
         if hint_ == ALL_GREEN:
             assert len(sub_possibilities) == 1
             remaining_guesses_distribution[0] += 1
         else:
-            g = best_guess(sub_possibilities,stack=sub_stack)
+            g = best_guess(sub_possibilities,log_func=log_func, stack=sub_stack)
             remaining_guesses_distribution[g.expected_after + 1] += len(sub_possibilities)
 
     return Fraction(
@@ -150,6 +158,16 @@ def parse_hints(all_hints: str):
         word, hintstr = chunk.split(':')
         yield word, parse_hint(hintstr)
 
+class IntervalLogger:
+    def __init__(self, interval=1):
+        self._last_logged = 0
+        self._interval = interval
+
+    def log(self, *args):
+        if time.time() - self._last_logged > self._interval:
+            print(*args)
+            self._last_logged = time.time()
+
 if __name__ == '__main__':
     import doctest
     failures, _ = doctest.testmod()
@@ -170,4 +188,5 @@ if __name__ == '__main__':
         if len(possibilities) < 10:
             print('Possibilities:', sorted(possibilities))
 
-    print(best_guess(possibilities))
+    logger = IntervalLogger()
+    print(best_guess(possibilities, log_func=logger.log))
