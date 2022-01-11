@@ -41,23 +41,23 @@ def hint(actual, guess):
     """Returns the hint for the word guessed.
 
     >>> hint('abcd', 'abcd')
-    [GREEN, GREEN, GREEN, GREEN]
+    (GREEN, GREEN, GREEN, GREEN)
     >>> hint('abcd', 'dcba')
-    [YELLOW, YELLOW, YELLOW, YELLOW]
+    (YELLOW, YELLOW, YELLOW, YELLOW)
     >>> hint('abcde', 'edcba')
-    [YELLOW, YELLOW, GREEN, YELLOW, YELLOW]
+    (YELLOW, YELLOW, GREEN, YELLOW, YELLOW)
     >>> hint('xxxxx', 'bacon')
-    [GRAY, GRAY, GRAY, GRAY, GRAY]
+    (GRAY, GRAY, GRAY, GRAY, GRAY)
     >>> hint('xaaax', 'xxaaa')
-    [GREEN, YELLOW, GREEN, GREEN, YELLOW]
+    (GREEN, YELLOW, GREEN, GREEN, YELLOW)
     >>> hint('aabbc', 'bbxxa')
-    [YELLOW, YELLOW, GRAY, GRAY, YELLOW]
+    (YELLOW, YELLOW, GRAY, GRAY, YELLOW)
     >>> hint('bbxxa', 'aabbc')
-    [YELLOW, GRAY, YELLOW, YELLOW, GRAY]
+    (YELLOW, GRAY, YELLOW, YELLOW, GRAY)
     >>> hint('abaci','bacon')
-    [YELLOW, YELLOW, YELLOW, GRAY, GRAY]
+    (YELLOW, YELLOW, YELLOW, GRAY, GRAY)
     >>> hint('bacon', 'abaci')
-    [YELLOW, YELLOW, GRAY, YELLOW, GRAY]
+    (YELLOW, YELLOW, GRAY, YELLOW, GRAY)
     """
     if len(actual) != len(guess):
         raise ValueError('Word lengths must match')
@@ -77,7 +77,7 @@ def hint(actual, guess):
         else:
             out.append(GRAY)
 
-    return out
+    return tuple(out)
 
 GuessWithExpectation = collections.namedtuple('GuessWithExpectation', ['guess', 'expected_after'])
 def best_guess(possibilities: Set[str]) -> GuessWithExpectation:
