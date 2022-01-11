@@ -133,3 +133,14 @@ if __name__ == '__main__':
     args = parser.parse_args()
     WORDS = set(args.dictionary.read_text().splitlines())
     print(len(WORDS), 'words loaded from', args.dictionary)
+
+    possibilities = WORDS
+    for word, hint_ in parse_hints(args.hints):
+        pbh = possibilities_by_hint(possibilities, word)
+        if hint_ not in pbh:
+            print('No possibilities after hint', hint_)
+            exit(1)
+        possibilities = pbh[hint_]
+        print(word, hint_, len(possibilities), 'possibilities remain')
+        if len(possibilities) < 10:
+            print('Possibilities:', sorted(possibilities))
