@@ -18,7 +18,13 @@ parser.add_argument(
 
 parser.add_argument(
     '--hints',
-    help='Hints received so far. Example: grant:GGYRR',
+    help="""
+    Hints received so far. Example: aahed:GRRYR,abuse:GRRRG,atoke:GRRRG
+
+    G: green
+    Y: yellow
+    R: gray
+    """,
     type=str,
     default='',
 )
