@@ -221,4 +221,5 @@ if __name__ == '__main__':
 
     logger = IntervalLogger(args.log_interval)
     run = Run(log_sink=logger.log)
-    print(run.best_guess(tuple(possibilities)))
+    best_guess = run.best_guess(tuple(possibilities))
+    print(f'Best guess: "{best_guess.guess}", which should get the right answer in {float(best_guess.expected_after+1):.2f} guesses on average')
