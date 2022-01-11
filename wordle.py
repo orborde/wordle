@@ -177,6 +177,8 @@ def parse_hint(hintstr: str):
     return tuple(map(parse_hint_piece, hintstr))
 
 def parse_hints(all_hints: str):
+    if all_hints == '':
+        return
     for chunk in all_hints.split(','):
         word, hintstr = chunk.split(':')
         yield word, parse_hint(hintstr)
