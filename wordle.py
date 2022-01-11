@@ -23,6 +23,13 @@ parser.add_argument(
     default='',
 )
 
+parser.add_argument(
+    '--log_interval',
+    help='Log progress every N seconds',
+    type=float,
+    default=1,
+)
+
 class HintPiece(Enum):
     GREEN = 'GREEN'
     YELLOW = 'YELLOW'
@@ -173,7 +180,7 @@ def parse_hints(all_hints: str):
         yield word, parse_hint(hintstr)
 
 class IntervalLogger:
-    def __init__(self, interval=1):
+    def __init__(self, interval):
         self._last_logged = 0
         self._interval = interval
 
@@ -202,6 +209,6 @@ if __name__ == '__main__':
         if len(possibilities) < 10:
             print('Possibilities:', sorted(possibilities))
 
-    logger = IntervalLogger()
+    logger = IntervalLogger(args.log_interval)
     run = Run(log_sink=logger.log)
     print(run.best_guess(possibilities))
