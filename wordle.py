@@ -97,42 +97,45 @@ def null_log(*args):
     pass
 
 GuessWithExpectation = collections.namedtuple('GuessWithExpectation', ['guess', 'expected_after'])
-def best_guess(possibilities: List[str], log_func=null_log, stack=[]) -> GuessWithExpectation:
-    values = []
-    for i, guess in enumerate(possibilities):
-        values.append(
-            GuessWithExpectation(guess,
-            expected_guesses_after(
-                possibilities,
-                guess,
-                log_func=log_func,
-                stack=stack + [len(possibilities), i+1, guess])),
+class Run:
+    def __init__(self, log_func=null_log):
+        self._log_func = log_func
+
+    def best_guess(self, possibilities: List[str], stack=[]) -> GuessWithExpectation:
+        values = []
+        for i, guess in enumerate(possibilities):
+            values.append(
+                GuessWithExpectation(guess,
+                self.expected_guesses_after(
+                    possibilities,
+                    guess,
+                    stack=stack + [len(possibilities), i+1, guess])),
+            )
+        best = min(
+            values,
+            key=lambda g: g.expected_after,
         )
-    best = min(
-        values,
-        key=lambda g: g.expected_after,
-    )
-    log_func(stack, 'best guess:', best.guess, float(best.expected_after))
-    return min(values, key=lambda g: g.expected_after)
+        self._log_func(stack, 'best guess:', best.guess, float(best.expected_after))
+        return min(values, key=lambda g: g.expected_after)
 
-def expected_guesses_after(possibilities: List[str], guess, log_func=null_log, stack=[]) -> Fraction:
-    remaining_guesses_distribution = collections.Counter()
-    for hint_, sub_possibilities in possibilities_by_hint(possibilities, guess).items():
-        sub_stack = stack + [brief_hint(hint_)]
-        log_func(sub_stack)
-        assert len(sub_possibilities) > 0
+    def expected_guesses_after(self, possibilities: List[str], guess, stack=[]) -> Fraction:
+        remaining_guesses_distribution = collections.Counter()
+        for hint_, sub_possibilities in possibilities_by_hint(possibilities, guess).items():
+            sub_stack = stack + [brief_hint(hint_)]
+            self._log_func(sub_stack)
+            assert len(sub_possibilities) > 0
 
-        if hint_ == ALL_GREEN:
-            assert len(sub_possibilities) == 1
-            remaining_guesses_distribution[0] += 1
-        else:
-            g = best_guess(sub_possibilities,log_func=log_func, stack=sub_stack)
-            remaining_guesses_distribution[g.expected_after + 1] += len(sub_possibilities)
+            if hint_ == ALL_GREEN:
+                assert len(sub_possibilities) == 1
+                remaining_guesses_distribution[0] += 1
+            else:
+                g = self.best_guess(sub_possibilities, stack=sub_stack)
+                remaining_guesses_distribution[g.expected_after + 1] += len(sub_possibilities)
 
-    return Fraction(
-        sum(k * v for k, v in remaining_guesses_distribution.items()),
-        sum(remaining_guesses_distribution.values()),
-    )
+        return Fraction(
+            sum(k * v for k, v in remaining_guesses_distribution.items()),
+            sum(remaining_guesses_distribution.values()),
+        )
 
 def possibilities_by_hint(possibilities, guess):
     possibilities_by_hint = collections.defaultdict(list)
@@ -189,4 +192,5 @@ if __name__ == '__main__':
             print('Possibilities:', sorted(possibilities))
 
     logger = IntervalLogger()
-    print(best_guess(possibilities, log_func=logger.log))
+    run = Run(log_func=logger.log)
+    print(run.best_guess(possibilities))
