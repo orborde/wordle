@@ -107,16 +107,18 @@ def possibilities_by_hint(possibilities, guess):
         possibilities_by_hint[hint(actual, guess)].add(actual)
     return possibilities_by_hint
 
+def parse_hint_piece(hint_piece: str) -> HintPiece:
+    if hint_piece == 'G':
+        return GREEN
+    elif hint_piece == 'Y':
+        return YELLOW
+    elif hint_piece == 'R':
+        return GRAY
+    else:
+        raise ValueError('Unknown hint piece: {}'.format(hint_piece))
+
 def parse_hint(hintstr: str):
-    for hint_piece in hintstr:
-        if hint_piece == 'G':
-            yield GREEN
-        elif hint_piece == 'Y':
-            yield YELLOW
-        elif hint_piece == 'R':
-            yield GRAY
-        else:
-            raise ValueError('Unknown hint piece: {}'.format(hint_piece))
+    return tuple(map(parse_hint_piece, hintstr))
 
 def parse_hints(all_hints: str):
     for chunk in all_hints.split(','):
