@@ -93,15 +93,26 @@ def hint(actual, guess):
 
     return tuple(out)
 
-def null_log(*args):
-    pass
-
 GuessWithExpectation = collections.namedtuple('GuessWithExpectation', ['guess', 'expected_after'])
 class Run:
-    def __init__(self, log_func=null_log):
-        self._log_func = log_func
+    def __init__(self, log_sink=None):
+        self._log_sink = log_sink
+        self._knowledge_states_seen = set()
+        self._knowledge_states_visited = 0
+
+    def log(self, *args):
+        if self._log_sink is None:
+            return
+
+        self._log_sink(
+            len(self._knowledge_states_seen),
+            self._knowledge_states_visited,
+            len(self._knowledge_states_seen) / self._knowledge_states_visited,
+            *args)
 
     def best_guess(self, possibilities: List[str], stack=[]) -> GuessWithExpectation:
+        self._knowledge_states_seen.add(tuple(possibilities))
+        self._knowledge_states_visited += 1
         values = []
         for i, guess in enumerate(possibilities):
             values.append(
@@ -115,14 +126,14 @@ class Run:
             values,
             key=lambda g: g.expected_after,
         )
-        self._log_func(stack, 'best guess:', best.guess, float(best.expected_after))
+        self.log(stack, 'best guess:', best.guess, float(best.expected_after))
         return min(values, key=lambda g: g.expected_after)
 
     def expected_guesses_after(self, possibilities: List[str], guess, stack=[]) -> Fraction:
         remaining_guesses_distribution = collections.Counter()
         for hint_, sub_possibilities in possibilities_by_hint(possibilities, guess).items():
             sub_stack = stack + [brief_hint(hint_)]
-            self._log_func(sub_stack)
+            self.log(sub_stack)
             assert len(sub_possibilities) > 0
 
             if hint_ == ALL_GREEN:
@@ -192,5 +203,5 @@ if __name__ == '__main__':
             print('Possibilities:', sorted(possibilities))
 
     logger = IntervalLogger()
-    run = Run(log_func=logger.log)
+    run = Run(log_sink=logger.log)
     print(run.best_guess(possibilities))
