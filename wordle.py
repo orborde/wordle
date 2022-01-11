@@ -35,7 +35,7 @@ GREEN = HintPiece.GREEN
 YELLOW = HintPiece.YELLOW
 GRAY = HintPiece.GRAY
 
-ALL_GREEN = [GREEN, GREEN, GREEN, GREEN, GREEN]
+ALL_GREEN = (GREEN, GREEN, GREEN, GREEN, GREEN)
 
 def hint(actual, guess):
     """Returns the hint for the word guessed.
