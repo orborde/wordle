@@ -22,7 +22,7 @@ parser.add_argument(
     default='',
 )
 
-class Hint(Enum):
+class HintPiece(Enum):
     GREEN = 'GREEN'
     YELLOW = 'YELLOW'
     GRAY = 'GRAY'
@@ -31,9 +31,9 @@ class Hint(Enum):
         return self.value
 
 # I don't know how to manage namespaces cleanly.
-GREEN = Hint.GREEN
-YELLOW = Hint.YELLOW
-GRAY = Hint.GRAY
+GREEN = HintPiece.GREEN
+YELLOW = HintPiece.YELLOW
+GRAY = HintPiece.GRAY
 
 ALL_GREEN = [GREEN, GREEN, GREEN, GREEN, GREEN]
 
