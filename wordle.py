@@ -104,7 +104,7 @@ GuessWithExpectation = collections.namedtuple('GuessWithExpectation', ['guess', 
 class Run:
     def __init__(self, log_sink=None):
         self._log_sink = log_sink
-        self._knowledge_states_seen = set()
+        self._knowledge_states_seen = {}
         self._knowledge_states_visited = 0
 
     def log(self, *args):
@@ -117,28 +117,30 @@ class Run:
             len(self._knowledge_states_seen) / self._knowledge_states_visited,
             *args)
 
-    def best_guess(self, possibilities: List[str], stack=[]) -> GuessWithExpectation:
-        self._knowledge_states_seen.add(tuple(possibilities))
+    def best_guess(self, possibilities: Tuple[str], stack=[]) -> GuessWithExpectation:
         self._knowledge_states_visited += 1
-        values = []
-        for i, guess in enumerate(possibilities):
-            values.append(
-                GuessWithExpectation(guess,
-                self.expected_guesses_after(
-                    possibilities,
-                    guess,
-                    stack=stack + [len(possibilities), i+1, guess])),
+        if possibilities not in self._knowledge_states_seen:
+            values = []
+            for i, guess in enumerate(possibilities):
+                values.append(
+                    GuessWithExpectation(guess,
+                    self.expected_guesses_after(
+                        possibilities,
+                        guess,
+                        stack=stack + [len(possibilities), i+1, guess])),
+                )
+            best = min(
+                values,
+                key=lambda g: g.expected_after,
             )
-        best = min(
-            values,
-            key=lambda g: g.expected_after,
-        )
-        self.log(stack, 'best guess:', best.guess, float(best.expected_after))
-        return min(values, key=lambda g: g.expected_after)
+            self.log(stack, 'best guess:', best.guess, float(best.expected_after))
+            self._knowledge_states_seen[possibilities] = min(values, key=lambda g: g.expected_after)
+        return self._knowledge_states_seen[possibilities]
 
-    def expected_guesses_after(self, possibilities: List[str], guess, stack=[]) -> Fraction:
+    def expected_guesses_after(self, possibilities: Tuple[str], guess, stack=[]) -> Fraction:
         remaining_guesses_distribution = collections.Counter()
         for hint_, sub_possibilities in possibilities_by_hint(possibilities, guess).items():
+            sub_possibilities = tuple(sub_possibilities)
             sub_stack = stack + [brief_hint(hint_)]
             self.log(sub_stack)
             assert len(sub_possibilities) > 0
@@ -195,7 +197,7 @@ if __name__ == '__main__':
     assert failures == 0
 
     args = parser.parse_args()
-    WORDS = list(args.dictionary.read_text().splitlines())
+    WORDS = tuple(args.dictionary.read_text().splitlines())
     print(len(WORDS), 'words loaded from', args.dictionary)
 
     possibilities = WORDS
@@ -211,4 +213,4 @@ if __name__ == '__main__':
 
     logger = IntervalLogger(args.log_interval)
     run = Run(log_sink=logger.log)
-    print(run.best_guess(possibilities))
+    print(run.best_guess(tuple(possibilities)))
