@@ -90,12 +90,8 @@ def best_guess(possibilities: Set[str]) -> GuessWithExpectation:
     )
 
 def expected_guesses_after(possibilities: Set[str], guess) -> Fraction:
-    possibilities_by_hint = collections.defaultdict(list)
-    for actual in possibilities:
-        possibilities_by_hint[hint(actual, guess)].append(actual)
-
     remaining_guesses_distribution = collections.Counter()
-    for hint_, sub_possibilities in possibilities_by_hint.items():
+    for hint_, sub_possibilities in possibilities_by_hint(possibilities, guess).items():
         assert len(sub_possibilities) > 0
 
         if hint_ == ALL_GREEN:
@@ -105,8 +101,27 @@ def expected_guesses_after(possibilities: Set[str], guess) -> Fraction:
             g = best_guess(sub_possibilities)
             remaining_guesses_distribution[g.expected_after + 1] += len(sub_possibilities)
 
-def parse_hints(hintstr: str):
-    pass
+def possibilities_by_hint(possibilities, guess):
+    possibilities_by_hint = collections.defaultdict(set)
+    for actual in possibilities:
+        possibilities_by_hint[hint(actual, guess)].add(actual)
+    return possibilities_by_hint
+
+def parse_hint(hintstr: str):
+    for hint_piece in hintstr:
+        if hint_piece == 'G':
+            yield GREEN
+        elif hint_piece == 'Y':
+            yield YELLOW
+        elif hint_piece == 'R':
+            yield GRAY
+        else:
+            raise ValueError('Unknown hint piece: {}'.format(hint_piece))
+
+def parse_hints(all_hints: str):
+    for chunk in all_hints.split(','):
+        word, hintstr = chunk.split(':')
+        yield word, parse_hint(hintstr)
 
 if __name__ == '__main__':
     import doctest
