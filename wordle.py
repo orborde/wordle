@@ -42,6 +42,10 @@ def hint(actual, guess):
     [YELLOW, YELLOW, GRAY, GRAY, YELLOW]
     >>> hint('bbxxa', 'aabbc')
     [YELLOW, GRAY, YELLOW, YELLOW, GRAY]
+    >>> hint('abaci','bacon')
+    [YELLOW, YELLOW, YELLOW, GRAY, GRAY]
+    >>> hint('bacon', 'abaci')
+    [YELLOW, YELLOW, GRAY, YELLOW, GRAY]
     """
     if len(actual) != len(guess):
         raise ValueError('Word lengths must match')
