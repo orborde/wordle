@@ -86,7 +86,7 @@ def best_guess(possibilities: Set[str]) -> GuessWithExpectation:
             GuessWithExpectation(guess, expected_guesses_after(possibilities, guess))
             for guess in possibilities
         ],
-        key=lambda g: g.expectation,
+        key=lambda g: g.expected_after,
     )
 
 def expected_guesses_after(possibilities: Set[str], guess) -> Fraction:
@@ -100,6 +100,11 @@ def expected_guesses_after(possibilities: Set[str], guess) -> Fraction:
         else:
             g = best_guess(sub_possibilities)
             remaining_guesses_distribution[g.expected_after + 1] += len(sub_possibilities)
+
+    return Fraction(
+        sum(k * v for k, v in remaining_guesses_distribution.items()),
+        sum(remaining_guesses_distribution.values()),
+    )
 
 def possibilities_by_hint(possibilities, guess):
     possibilities_by_hint = collections.defaultdict(set)
@@ -144,3 +149,5 @@ if __name__ == '__main__':
         print(word, hint_, len(possibilities), 'possibilities remain')
         if len(possibilities) < 10:
             print('Possibilities:', sorted(possibilities))
+
+    print(best_guess(possibilities))
