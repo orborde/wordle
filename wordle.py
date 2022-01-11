@@ -95,10 +95,10 @@ def hint(actual, guess):
 GuessWithExpectation = collections.namedtuple('GuessWithExpectation', ['guess', 'expected_after'])
 def best_guess(possibilities: List[str], debug=False, stack=[]) -> GuessWithExpectation:
     values = []
-    for guess in possibilities:
+    for i, guess in enumerate(possibilities):
         values.append(
             GuessWithExpectation(guess,
-            expected_guesses_after(possibilities, guess, stack=stack + [guess])),
+            expected_guesses_after(possibilities, guess, stack=stack + [len(possibilities), i+1, guess])),
         )
     best = min(
         values,
@@ -110,7 +110,7 @@ def best_guess(possibilities: List[str], debug=False, stack=[]) -> GuessWithExpe
 def expected_guesses_after(possibilities: List[str], guess, stack=[]) -> Fraction:
     remaining_guesses_distribution = collections.Counter()
     for hint_, sub_possibilities in possibilities_by_hint(possibilities, guess).items():
-        sub_stack = stack + [brief_hint(hint_), len(sub_possibilities)]
+        sub_stack = stack + [brief_hint(hint_)]
         print(sub_stack)
         assert len(sub_possibilities) > 0
 
