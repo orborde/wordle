@@ -93,25 +93,32 @@ def hint(actual, guess):
     return tuple(out)
 
 GuessWithExpectation = collections.namedtuple('GuessWithExpectation', ['guess', 'expected_after'])
-def best_guess(possibilities: Set[str]) -> GuessWithExpectation:
-    return min(
-        [
-            GuessWithExpectation(guess, expected_guesses_after(possibilities, guess))
-            for guess in possibilities
-        ],
+def best_guess(possibilities: Set[str], debug=False, stack=[]) -> GuessWithExpectation:
+    values = []
+    for guess in possibilities:
+        values.append(
+            GuessWithExpectation(guess,
+            expected_guesses_after(possibilities, guess, stack=stack + [guess])),
+        )
+    best = min(
+        values,
         key=lambda g: g.expected_after,
     )
+    print(stack, 'best guess:', best.guess, float(best.expected_after))
+    return min(values, key=lambda g: g.expected_after)
 
-def expected_guesses_after(possibilities: Set[str], guess) -> Fraction:
+def expected_guesses_after(possibilities: Set[str], guess, stack=[]) -> Fraction:
     remaining_guesses_distribution = collections.Counter()
     for hint_, sub_possibilities in possibilities_by_hint(possibilities, guess).items():
+        sub_stack = stack + [brief_hint(hint_), len(sub_possibilities)]
+        print(sub_stack)
         assert len(sub_possibilities) > 0
 
         if hint_ == ALL_GREEN:
             assert len(sub_possibilities) == 1
             remaining_guesses_distribution[0] += 1
         else:
-            g = best_guess(sub_possibilities)
+            g = best_guess(sub_possibilities,stack=sub_stack)
             remaining_guesses_distribution[g.expected_after + 1] += len(sub_possibilities)
 
     return Fraction(
