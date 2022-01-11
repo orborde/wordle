@@ -35,6 +35,19 @@ GREEN = HintPiece.GREEN
 YELLOW = HintPiece.YELLOW
 GRAY = HintPiece.GRAY
 
+def brief_hint_piece(hint_piece: HintPiece) -> str:
+    if hint_piece == GREEN:
+        return 'G'
+    elif hint_piece == YELLOW:
+        return 'Y'
+    elif hint_piece == GRAY:
+        return 'R'
+    else:
+        raise ValueError('Unknown hint piece: {}'.format(hint_piece))
+
+def brief_hint(hint: Tuple[HintPiece]) -> str:
+    return ''.join(brief_hint_piece(h) for h in hint)
+
 ALL_GREEN = (GREEN, GREEN, GREEN, GREEN, GREEN)
 
 def hint(actual, guess):
