@@ -4,6 +4,7 @@ import argparse
 import collections
 from enum import Enum
 from fractions import Fraction
+import math
 import pathlib
 import time
 from typing import List, Tuple, Dict, Set, Optional
@@ -123,9 +124,10 @@ class Run:
             len(self._knowledge_states_seen) / self._knowledge_states_visited,
             *args)
 
-    def best_guess(self, possibilities: Tuple[str], stack=[]) -> GuessWithExpectation:
+    def best_guess(self, possibilities: Tuple[str], guesses_made, stack=[]) -> GuessWithExpectation:
         self._knowledge_states_visited += 1
-        if possibilities not in self._knowledge_states_seen:
+        memoization_key = (guesses_made, possibilities)
+        if memoization_key not in self._knowledge_states_seen:
             values = []
             for i, guess in enumerate(possibilities):
                 values.append(
@@ -133,6 +135,7 @@ class Run:
                     self.expected_guesses_after(
                         possibilities,
                         guess,
+                        guesses_made+1,
                         stack=stack + [len(possibilities), i+1, guess])),
                 )
             best = min(
@@ -143,7 +146,10 @@ class Run:
             self._knowledge_states_seen[possibilities] = min(values, key=lambda g: g.expected_after)
         return self._knowledge_states_seen[possibilities]
 
-    def expected_guesses_after(self, possibilities: Tuple[str], guess, stack=[]) -> Fraction:
+    def expected_guesses_after(self, possibilities: Tuple[str], guess, guesses_made, stack=[]) -> Fraction:
+        if guesses_made > 6:
+            return math.inf
+
         remaining_guesses_distribution = collections.Counter()
         for hint_, sub_possibilities in possibilities_by_hint(possibilities, guess).items():
             sub_possibilities = tuple(sub_possibilities)
@@ -155,11 +161,16 @@ class Run:
                 assert len(sub_possibilities) == 1
                 remaining_guesses_distribution[0] += 1
             else:
-                g = self.best_guess(sub_possibilities, stack=sub_stack)
+                g = self.best_guess(sub_possibilities, guesses_made+1, stack=sub_stack)
                 remaining_guesses_distribution[g.expected_after + 1] += len(sub_possibilities)
 
+        # Can't use inf as the numerator because it's not a valid Fraction.
+        numerator = sum(k * v for k, v in remaining_guesses_distribution.items())
+        if numerator == math.inf:
+            return math.inf
+
         return Fraction(
-            sum(k * v for k, v in remaining_guesses_distribution.items()),
+            numerator,
             sum(remaining_guesses_distribution.values()),
         )
 
@@ -209,7 +220,8 @@ if __name__ == '__main__':
     print(len(WORDS), 'words loaded from', args.dictionary)
 
     possibilities = WORDS
-    for word, hint_ in parse_hints(args.hints):
+    hints = list(parse_hints(args.hints))
+    for word, hint_ in hints:
         pbh = possibilities_by_hint(possibilities, word)
         if hint_ not in pbh:
             print('No possibilities after hint', hint_)
@@ -221,5 +233,5 @@ if __name__ == '__main__':
 
     logger = IntervalLogger(args.log_interval)
     run = Run(log_sink=logger.log)
-    best_guess = run.best_guess(tuple(possibilities))
+    best_guess = run.best_guess(tuple(possibilities), guesses_made=len(hints))
     print(f'Best guess: "{best_guess.guess}", which should get the right answer in {float(best_guess.expected_after+1):.2f} guesses on average')
