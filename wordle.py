@@ -109,7 +109,8 @@ def hint(actual, guess):
 
 GuessWithExpectation = collections.namedtuple('GuessWithExpectation', ['guess', 'expected_after'])
 class Run:
-    def __init__(self, log_sink=None):
+    def __init__(self, guessable_words, log_sink=None):
+        self._guessable_words = guessable_words
         self._log_sink = log_sink
         self._knowledge_states_seen = {}
         self._knowledge_states_visited = 0
@@ -129,7 +130,7 @@ class Run:
         memoization_key = (guesses_made, possibilities)
         if memoization_key not in self._knowledge_states_seen:
             values = []
-            for i, guess in enumerate(possibilities):
+            for i, guess in enumerate(self._guessable_words):
                 values.append(
                     GuessWithExpectation(guess,
                     self.expected_guesses_after(
@@ -151,8 +152,10 @@ class Run:
             return math.inf
 
         remaining_guesses_distribution = collections.Counter()
-        for hint_, sub_possibilities in possibilities_by_hint(possibilities, guess).items():
+        hint_subpossibilities = possibilities_by_hint(possibilities, guess)
+        for hint_, sub_possibilities in hint_subpossibilities.items():
             sub_possibilities = tuple(sub_possibilities)
+
             sub_stack = stack + [brief_hint(hint_)]
             self.log(sub_stack)
             assert len(sub_possibilities) > 0
@@ -161,6 +164,11 @@ class Run:
                 assert len(sub_possibilities) == 1
                 remaining_guesses_distribution[0] += 1
             else:
+                # This implies that you will learn absolutely nothing by
+                # making the guess. So, don't!
+                if len(sub_possibilities) == len(possibilities):
+                    return math.inf
+
                 g = self.best_guess(sub_possibilities, guesses_made+1, stack=sub_stack)
                 remaining_guesses_distribution[g.expected_after + 1] += len(sub_possibilities)
 
@@ -232,6 +240,6 @@ if __name__ == '__main__':
             print('Possibilities:', sorted(possibilities))
 
     logger = IntervalLogger(args.log_interval)
-    run = Run(log_sink=logger.log)
+    run = Run(guessable_words=WORDS, log_sink=logger.log)
     best_guess = run.best_guess(tuple(possibilities), guesses_made=len(hints))
     print(f'Best guess: "{best_guess.guess}", which should get the right answer in {float(best_guess.expected_after+1):.2f} guesses on average')

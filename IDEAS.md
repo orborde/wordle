@@ -1,0 +1,1 @@
+* Dominance relation: if you have a word that has some red letters, and you can change those letters to unknown/yellow/green letters to make another word, always guess that word instead.
