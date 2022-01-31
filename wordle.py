@@ -144,8 +144,8 @@ class Run:
                 key=lambda g: g.expected_after,
             )
             self.log(stack, 'best guess:', best.guess, float(best.expected_after))
-            self._knowledge_states_seen[possibilities] = min(values, key=lambda g: g.expected_after)
-        return self._knowledge_states_seen[possibilities]
+            self._knowledge_states_seen[memoization_key] = min(values, key=lambda g: g.expected_after)
+        return self._knowledge_states_seen[memoization_key]
 
     def expected_guesses_after(self, possibilities: Tuple[str], guess, guesses_made, stack=[]) -> Fraction:
         if guesses_made > 6:
